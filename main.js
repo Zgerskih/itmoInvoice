@@ -1,23 +1,28 @@
-import './style.css'
-import javascriptLogo from './javascript.svg'
-import { setupCounter } from './counter.js'
+const domBtnPlus = document.getElementById('btnAddWorkItem');
+const domBtnClose = document.getElementById('btnCloseWorkItemPopup');
+const popup = document.getElementById('popup');
+const domInputQty = document.getElementById('inputWorkItemQty');
+const domInputCost = document.getElementById('inputWorkItemCost');
+const domItemTotal = document.getElementById('workItemTotalContainer');
 
-document.querySelector('#app').innerHTML = `
-  <div>
-    <a href="https://vitejs.dev" target="_blank">
-      <img src="/vite.svg" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript" target="_blank">
-      <img src="${javascriptLogo}" class="logo vanilla" alt="JavaScript logo" />
-    </a>
-    <h1>Hello Vite!</h1>
-    <div class="card">
-      <button id="counter" type="button"></button>
-    </div>
-    <p class="read-the-docs">
-      Click on the Vite logo to learn more
-    </p>
-  </div>
-`
+domBtnPlus.addEventListener('click', onBtnOpenAddWorkItem);
+domBtnClose.addEventListener('click', onBtnCloseAddWorkItem);
+domInputQty.addEventListener('keyup', totalItem);
+domInputCost.addEventListener('keyup', totalItem);
 
-setupCounter(document.querySelector('#counter'))
+function totalItem() {
+  const qty = domInputQty.value;
+  const cost = domInputCost.value;
+  let total = qty * cost;
+  domItemTotal.innerHTML = total;
+  console.log(total);
+  return total;
+}
+
+function onBtnOpenAddWorkItem() {
+  popup.style.display = 'block';
+}
+
+function onBtnCloseAddWorkItem() {
+  popup.style.display = 'none';
+}
