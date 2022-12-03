@@ -26,3 +26,13 @@ function onBtnOpenAddWorkItem() {
 function onBtnCloseAddWorkItem() {
   popup.style.display = 'none';
 }
+
+
+// function totalItem() {
+//   const qty = domInputQty.value;
+//   const cost = domInputCost.value;
+//   let total = qty * cost;
+//   domItemTotal.innerHTML = total;
+//   console.log(total);
+//   return total;
+// }
