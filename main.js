@@ -4,7 +4,7 @@ const btnCloceContainer = document.getElementById("btnCloceContainer");
 const btnCreateItem = document.getElementById("btnCreateItem");
 
 btnCreateItem.addEventListener("click", createItemSheet);
-btnCloceContainer.addEventListener("click", clocePopupContainer);
+btnCloceContainer.addEventListener("click", closePopupContainer);
 btnOpenContainer.addEventListener("click", () => openPopupContainer());
 
 //  input
@@ -92,9 +92,10 @@ function openPopupContainer(index) {
   inpQtyElements.value = currentWorkItem.qty;
 }
 
-function clocePopupContainer() {
+function closePopupContainer() {
   popupContainer.style.display = "none";
 }
+
 
 function inpDocumentNumberVerification() {
   const invoiceDocumentNumber = inpDocumentNumber.value;
