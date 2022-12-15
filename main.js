@@ -3,6 +3,7 @@ const btnOpenContainer = document.getElementById("btnAddItem");
 const btnCloceContainer = document.getElementById("btnCloceContainer");
 const btnCreateItem = document.getElementById("btnCreateItem");
 
+
 btnCreateItem.addEventListener("click", createItemSheet);
 btnCloceContainer.addEventListener("click", closePopupContainer);
 btnOpenContainer.addEventListener("click", () => openPopupContainer());
@@ -20,12 +21,22 @@ const subtotalResult = document.getElementById("subtotalResult");
 const discountResult = document.getElementById("discountResult");
 const totalResult = document.getElementById("totalResult");
 const popupBackgroundBlocker = document.getElementById("popupBackgroundBlocker");
+const discountInput = document.getElementById("discountInput");
 
 inpDocumentNumber.addEventListener("keyup", () => inpDocumentNumberVerification());
+discountInput.addEventListener("keyup", () => {
+  let discount = parseInt(discountInput.value);
+  if (discount > 100) {
+    discount = 100;
+    discountInput.value = discount;
+  }
+  invoiceVO.discount = discount;
+  calculateTotal()
+});
 
 inpQtyElements.addEventListener("keyup", (event) => {
   console.log("> inpQtyElements:", event.currentTarget.value);
-  currentWorkItem.qty = parseInt(event.currentTarget.value);
+  currentWorkItem.qty = parseInt(event.currentTarget.value) || 0;
   inputTotalElements.innerHTML = currentWorkItem.total;
   checkCanCreate();
 });
@@ -36,14 +47,14 @@ inpItemTitle.addEventListener("keyup", (event) => {
 });
 inputCostElements.addEventListener("keyup", (event) => {
   console.log("> inputCostElements:", event.currentTarget.value);
-  currentWorkItem.cost = parseInt(event.currentTarget.value);
+  currentWorkItem.cost = parseInt(event.currentTarget.value) || 0;
   inputTotalElements.innerHTML = currentWorkItem.total;
   checkCanCreate();
 });
 
 tableItems.addEventListener("click", (e) => {
-  const target = e.target.tableItems;
-  // console.log("click -> ", target, target.dataset.todoid);
+  const target = e.target;
+  console.log("click -> ", target, target.dataset.todoid);
   if (target.dataset.todoid) {
     openPopupContainer(target.dataset.todoid);
   }
@@ -66,30 +77,37 @@ class InvoiceVO {
 }
 
 class WorkItemVO {
-  constructor(title = "", description = "", qty, cost) {
-    this.id = null;
+  constructor({id, title = "", description = "", qty = 0, cost = 0}) {
+    this.id = id;
     this.title = title;
     this.description = description;
     this.qty = qty;
     this.cost = cost;
   }
   get total() {
-    return (this.cost) * (this.qty);
+    return (this.qty || 0) * (this.cost || 0);
   }
 }
 
 const invoiceVO = JSON.parse(localStorage.getItem("invoice")) || new InvoiceVO();
+invoiceVO.items = invoiceVO.items.map((raw) => new WorkItemVO(raw))
 let currentWorkItem = null;
-
 displayMessages();
+calculateTotal();
 
 function openPopupContainer(index) {
-  console.log(index);
-  currentWorkItem = index ? Object.create({}, invoiceVO.items[parseInt(index)]) : new WorkItemVO();
+  console.log('> openPopupContainer:',index);
+  const copy = index ? { ...invoiceVO.items[parseInt(index)] } : {};
+  currentWorkItem = new WorkItemVO(copy);
   console.log("> openPopupContainer -> currentWorkItem", currentWorkItem);
   btnCreateItem.disabled = true;
   popupContainer.style.display = "block";
-  inpQtyElements.value = currentWorkItem.qty;
+
+  inpQtyElements.value = currentWorkItem.qty || '';
+  inputCostElements.value = currentWorkItem.cost || '';
+  inpItemTitle.value = currentWorkItem.title;
+  inpDescription.value = currentWorkItem.description;
+  inputTotalElements.innerHTML = currentWorkItem.total;
 }
 
 function closePopupContainer() {
@@ -107,12 +125,8 @@ function inpDocumentNumberVerification() {
   }
 }
 
-function sumOfItemsQtyAndCost() {
-  const canCalculateTotal = currentWorkItem.qty && currentWorkItem.cost;
-  currentWorkItem.total = canCalculateTotal ? currentWorkItem.qty * currentWorkItem.cost : 0;
-  inputTotalElements.innerHTML = currentWorkItem.total;
-}
 function createItemSheet() {
+  console.log("> createItemSheet", currentWorkItem);
   if (currentWorkItem.id == null) {
     currentWorkItem.id = Date.now();
     invoiceVO.items.push(currentWorkItem);
@@ -122,7 +136,9 @@ function createItemSheet() {
   }
 
   currentWorkItem = null;
+  closePopupContainer();
   displayMessages();
+  calculateTotal();
   saveInvoice();
 }
 
@@ -143,26 +159,30 @@ function displayMessages() {
     >
     ${workItemVO.title} <span class="text-gray-500"><br>${workItemVO.description}</span>
     </td>
-    <td
+    <td data-todoid="${index}"
     class="pointer-events-none text-sm text-gray-900 font-light px-6 py-4 whitespace-nowrap"
     >
     ${workItemVO.qty}
     </td>
-    <td
+    <td data-todoid="${index}"
     class="pointer-events-none text-sm text-gray-900 font-light px-6 py-4 whitespace-nowrap"
     >
     ${workItemVO.cost}
     </td>
-    <td
+    <td data-todoid="${index}"
     class="pointer-events-none text-sm text-gray-900 font-light px-6 py-4 whitespace-nowrap"
     >
     $${workItemVO.total}
     </td>
     </tr>
       `;
-    subtotalResult.innerHTML = invoiceVO.items.reduce(function (prev, curr) {
-      return prev + curr.total;
-    }, 0);
   });
   tableItems.innerHTML = listItems;
+}
+function calculateTotal(){
+  const total = invoiceVO.items.reduce((prev, curr) => (prev += curr.total, prev), 0);
+  const discount = (invoiceVO.discount || 0) / 100 * total;
+  discountResult.innerHTML = `${discount}`;
+  subtotalResult.innerHTML = `${total}`;
+  totalResult.innerHTML = `${total - discount}`;
 }
