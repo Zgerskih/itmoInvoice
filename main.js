@@ -9,6 +9,8 @@ btnCloseContainer.addEventListener("click", closePopupContainer);
 btnOpenContainer.addEventListener("click", () => openPopupContainer());
 
 //  input
+
+const inpIBAN = document.getElementById("inpIBAN");
 const popupContainer = document.getElementById("popupContainer");
 const inpDocumentNumber = document.getElementById("documentNumber")
 const inpQtyElements = document.getElementById("inputQtyElements");
@@ -21,6 +23,9 @@ const subtotalResult = document.getElementById("subtotalResult");
 const discountResult = document.getElementById("discountResult");
 const totalResult = document.getElementById("totalResult");
 const discountInput = document.getElementById("discountInput");
+
+const textAdd = document.getElementById("textAdd");
+
 
 
 discountInput.addEventListener("keyup", () => {
@@ -51,6 +56,12 @@ inputCostElements.addEventListener("keyup", (event) => {
   checkCanCreate();
 });
 
+inpDescription.addEventListener("keyup", (event) => {
+  console.log("> inpDescription:", event.currentTarget.value);
+  currentWorkItem.description = event.currentTarget.value;
+  checkCanCreate();
+});
+
 tableItems.addEventListener("click", (e) => {
   const target = e.target;
   console.log("click -> ", target, target.dataset.todoid);
@@ -62,9 +73,18 @@ tableItems.addEventListener("click", (e) => {
 
 
 const checkCanCreate = () => {
-  const result = !(currentWorkItem.title.length > 0 && currentWorkItem.total > 0);
-  console.log("> checkCanCreate:", result);
-  btnCreateItem.disabled = result;
+  const originalWorkItem = invoiceVO.items.find((vo) => vo.id === currentWorkItem.id)
+  const isEditing = !!currentWorkItem.id;
+  const requiredCondition = currentWorkItem.title.length > 0 && currentWorkItem.total > 0;
+  let canBeEnabled = requiredCondition;
+  if (isEditing) {
+    canBeEnabled &= originalWorkItem.title !== currentWorkItem.title ||
+      originalWorkItem.qty !== currentWorkItem.qty ||
+      originalWorkItem.cost !== currentWorkItem.cost ||
+      originalWorkItem.description !== currentWorkItem.description;
+  }
+  console.log("> checkCanCreate:", { isEditing, canBeEnabled, requiredCondition, originalWorkItem, currentWorkItem });
+  btnCreateItem.disabled = !canBeEnabled;
 };
 // структура списка
 class InvoiceVO {
@@ -92,17 +112,23 @@ class WorkItemVO {
 
 const invoiceVO = JSON.parse(localStorage.getItem("invoice")) || new InvoiceVO();
 invoiceVO.items = invoiceVO.items.map((raw) => new WorkItemVO(raw))
+inpDocumentNumber.value = invoiceVO.id;
+inpIBAN.value = invoiceVO.iban;
 let currentWorkItem = null;
+
 displayMessages();
 calculateTotal();
 
 // открытие контейнера
 function openPopupContainer(index) {
   console.log('> openPopupContainer:',index);
-  const copy = index ? { ...invoiceVO.items[parseInt(index)] } : {};
+  const isEdit = !!index
+  const copy = isEdit ? { ...invoiceVO.items[parseInt(index)] } : {};
   currentWorkItem = new WorkItemVO(copy);
   console.log("> openPopupContainer -> currentWorkItem", currentWorkItem);
   btnCreateItem.disabled = true;
+  btnCreateItem.innerText = isEdit ? "Save" : "Create";
+  textAdd.innerText = isEdit ? "Update" : "Add";
   popupContainer.style.display = "block";
 
   inpQtyElements.value = currentWorkItem.qty || '';
@@ -118,12 +144,24 @@ function closePopupContainer() {
 // Ввод номера документа
 inpDocumentNumber.addEventListener("keyup", (event) => {
   console.log("> inpDocumentNumber:", event.currentTarget.value)
-
+  invoiceVO.id = inpDocumentNumber.value;
     saveInvoice();
 })
+// ибан
+inpIBAN.addEventListener("keyup", (event) => {
+  console.log("> inpIBAN:", event.currentTarget.value)
+  invoiceVO.iban = inpIBAN.value;
+  saveInvoice();
+})
+
 // Удаление списка
  btnDeleteItemList.addEventListener ('click',(e) =>{
    console.log(e);
+   if (confirm("DELETE")) {
+     const index = invoiceVO.items.findIndex((vo) => vo.id === currentWorkItem.id)
+     invoiceVO.items.splice(index, 1);
+     closePopupRerenderSaveInvoice();
+   }
  } )
 
 function createItemSheet() {
@@ -136,6 +174,10 @@ function createItemSheet() {
     invoiceVO.items.splice(index, 1, currentWorkItem);
   }
 
+  closePopupRerenderSaveInvoice();
+}
+
+function closePopupRerenderSaveInvoice() {
   currentWorkItem = null;
   closePopupContainer();
   displayMessages();
@@ -146,6 +188,7 @@ function createItemSheet() {
 function saveInvoice() {
   localStorage.setItem("invoice", JSON.stringify(invoiceVO));
   localStorage.setItem("inpDocumentNumber", JSON.stringify(inpDocumentNumber));
+
 }
 
 function displayMessages() {
