@@ -1,16 +1,16 @@
 // button
 const btnOpenContainer = document.getElementById("btnAddItem");
-const btnCloceContainer = document.getElementById("btnCloceContainer");
+const btnCloseContainer = document.getElementById("btnCloseContainer");
 const btnCreateItem = document.getElementById("btnCreateItem");
-
+const btnDeleteItemList = document.getElementById("btnDeleteItemList");
 
 btnCreateItem.addEventListener("click", createItemSheet);
-btnCloceContainer.addEventListener("click", closePopupContainer);
+btnCloseContainer.addEventListener("click", closePopupContainer);
 btnOpenContainer.addEventListener("click", () => openPopupContainer());
 
 //  input
 const popupContainer = document.getElementById("popupContainer");
-const inpDocumentNumber = document.getElementById("documentNumber");
+const inpDocumentNumber = document.getElementById("documentNumber")
 const inpQtyElements = document.getElementById("inputQtyElements");
 const inputCostElements = document.getElementById("inputCostElements");
 const inputTotalElements = document.getElementById("inputTotalElements");
@@ -20,10 +20,9 @@ const inpDescription = document.getElementById("inpDescription");
 const subtotalResult = document.getElementById("subtotalResult");
 const discountResult = document.getElementById("discountResult");
 const totalResult = document.getElementById("totalResult");
-const popupBackgroundBlocker = document.getElementById("popupBackgroundBlocker");
 const discountInput = document.getElementById("discountInput");
 
-inpDocumentNumber.addEventListener("keyup", () => inpDocumentNumberVerification());
+
 discountInput.addEventListener("keyup", () => {
   let discount = parseInt(discountInput.value);
   if (discount > 100) {
@@ -33,7 +32,7 @@ discountInput.addEventListener("keyup", () => {
   invoiceVO.discount = discount;
   calculateTotal()
 });
-
+// Ввод данных
 inpQtyElements.addEventListener("keyup", (event) => {
   console.log("> inpQtyElements:", event.currentTarget.value);
   currentWorkItem.qty = parseInt(event.currentTarget.value) || 0;
@@ -57,22 +56,24 @@ tableItems.addEventListener("click", (e) => {
   console.log("click -> ", target, target.dataset.todoid);
   if (target.dataset.todoid) {
     openPopupContainer(target.dataset.todoid);
+    console.log(tableItems);
   }
 });
-console.log(tableItems);
+
 
 const checkCanCreate = () => {
   const result = !(currentWorkItem.title.length > 0 && currentWorkItem.total > 0);
   console.log("> checkCanCreate:", result);
   btnCreateItem.disabled = result;
 };
-
+// структура списка
 class InvoiceVO {
   constructor() {
     this.id = "";
     this.items = [];
     this.discount = 0;
     this.iban = "";
+
   }
 }
 
@@ -95,6 +96,7 @@ let currentWorkItem = null;
 displayMessages();
 calculateTotal();
 
+// открытие контейнера
 function openPopupContainer(index) {
   console.log('> openPopupContainer:',index);
   const copy = index ? { ...invoiceVO.items[parseInt(index)] } : {};
@@ -109,21 +111,20 @@ function openPopupContainer(index) {
   inpDescription.value = currentWorkItem.description;
   inputTotalElements.innerHTML = currentWorkItem.total;
 }
-
+// закрытие контейнера
 function closePopupContainer() {
   popupContainer.style.display = "none";
 }
+// Ввод номера документа
+inpDocumentNumber.addEventListener("keyup", (event) => {
+  console.log("> inpDocumentNumber:", event.currentTarget.value)
 
-
-function inpDocumentNumberVerification() {
-  const invoiceDocumentNumber = inpDocumentNumber.value;
-  const checkingForNumber = invoiceDocumentNumber && !Number.isNaN(invoiceDocumentNumber);
-  if (checkingForNumber) {
-    return true;
-  } else {
-    alert("Enter the number");
-  }
-}
+    saveInvoice();
+})
+// Удаление списка
+ btnDeleteItemList.addEventListener ('click',(e) =>{
+   console.log(e);
+ } )
 
 function createItemSheet() {
   console.log("> createItemSheet", currentWorkItem);
@@ -144,6 +145,7 @@ function createItemSheet() {
 
 function saveInvoice() {
   localStorage.setItem("invoice", JSON.stringify(invoiceVO));
+  localStorage.setItem("inpDocumentNumber", JSON.stringify(inpDocumentNumber));
 }
 
 function displayMessages() {
